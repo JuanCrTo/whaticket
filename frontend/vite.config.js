@@ -43,6 +43,15 @@ export default defineConfig({
       "@material-ui/lab",
     ],
     exclude: [],
+    // Force esbuild to treat .js files as JSX during dependency scanning/pre-bundling
+    esbuildOptions: {
+      loader: {
+        ".js": "jsx",
+        ".cjs": "jsx",
+        ".mjs": "jsx",
+        ".jsx": "jsx",
+      },
+    },
   },
   resolve: {
     alias: {

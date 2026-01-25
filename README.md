@@ -51,7 +51,7 @@ docker run --name whaticketdb -e MYSQL_ROOT_PASSWORD=strongpassword -e MYSQL_DAT
 # Before copy .env.example to .env first and set the variables in the file.
 docker-compose up -d mysql
 
-# To administer this mysql database easily using phpmyadmin. 
+# To administer this mysql database easily using phpmyadmin.
 # It will run by default on port 9000, but can be changed in .env using `PMA_PORT`
 docker-compose -f docker-compose.phpmyadmin.yaml up -d
 ```
@@ -185,7 +185,7 @@ docker run --name whaticketdb -e MYSQL_ROOT_PASSWORD=strongpassword -e MYSQL_DAT
 # Before copy .env.example to .env first and set the variables in the file.
 docker-compose up -d mysql
 
-# To administer this mysql database easily using phpmyadmin. 
+# To administer this mysql database easily using phpmyadmin.
 # It will run by default on port 9000, but can be changed in .env using `PMA_PORT`
 docker-compose -f docker-compose.phpmyadmin.yaml up -d
 ```
@@ -400,7 +400,7 @@ To run WhaTicket using docker you must perform the following steps:
 cp .env.example .env
 ```
 
-Now it will be necessary to configure the .env using its information, the variables are the same as those mentioned in the deployment using ubuntu, with the exception of mysql settings that were not in the .env. 
+Now it will be necessary to configure the .env using its information, the variables are the same as those mentioned in the deployment using ubuntu, with the exception of mysql settings that were not in the .env.
 
 ```bash
 # MYSQL
@@ -530,3 +530,77 @@ Any help and suggestions will be apreciated.
 I just started leaning Javascript a few months ago and this is my first project. It may have security issues and many bugs. I recommend using it only on local network.
 
 This project is not affiliated, associated, authorized, endorsed by, or in any way officially connected with WhatsApp or any of its subsidiaries or its affiliates. The official WhatsApp website can be found at https://whatsapp.com. "WhatsApp" as well as related names, marks, emblems and images are registered trademarks of their respective owners.
+
+## Guía rápida: clonar y ejecutar localmente
+
+1. Requisitos previos
+
+- Docker & docker-compose (opcional)
+- Node 14 (recomendado) o 16
+- npm
+
+2. Clonar el repositorio
+
+3. Levantar la base de datos (opción rápida con Docker)
+
+```bash
+# Crea un contenedor MariaDB expuesto en localhost:3306
+docker run --name whaticketdb \
+  -e MYSQL_ROOT_PASSWORD=strongpassword \
+  -e MYSQL_DATABASE=whaticket \
+  -e MYSQL_USER=whaticket \
+  -e MYSQL_PASSWORD=whaticket \
+  --restart always -p 3306:3306 -d mariadb:latest \
+  --character-set-server=utf8mb4 --collation-server=utf8mb4_bin
+
+# Verifica que está corriendo
+docker ps --filter "name=whaticketdb"
+```
+
+4. Preparar variables de entorno para el backend
+
+En `backend/.env` ajusta las variables DB:
+
+```
+DB_DIALECT=mysql
+DB_HOST=127.0.0.1
+DB_USER=whaticket
+DB_PASS=whaticket
+DB_NAME=whaticket
+
+# Opcionalmente define JWT_SECRET/JWT_REFRESH_SECRET
+```
+
+5. Compilar, migrar y arrancar el backend
+
+```bash
+# Instala dependencias
+npm install
+
+# Compila TypeScript a dist (necesario para las migraciones)
+npm run build
+
+# Ejecuta migraciones y seeds (sequelizerc apunta a dist/)
+npx sequelize db:migrate
+npx sequelize db:seed:all
+
+# Arranca el servidor (usa dist/server.js)
+npm start
+```
+
+Verifica que el backend responde:
+
+```bash
+curl -i http://localhost:8080/settings
+```
+
+6. Preparar y arrancar el frontend
+
+```bash
+cd ../frontend
+# REACT_APP_BACKEND_URL=http://localhost:8080/
+npm install
+npm start
+```
+
+Abre en tu navegador: http://localhost:3000
