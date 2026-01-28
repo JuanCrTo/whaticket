@@ -1,0 +1,33 @@
+version: "3"
+
+networks:
+  whaticket:
+
+services:
+  mysql:
+    image: mariadb:10.6
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_bin
+    volumes:
+      - ./.docker/data/:/var/lib/mysql
+    environment:
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-whaticket_2}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-strongpassword}
+      - MYSQL_USER=${MYSQL_USER:-whaticket}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-whaticket123}
+      - TZ=${TZ:-America/Fortaleza}
+    ports:
+      - ${MYSQL_PORT:-3306}:3306
+    restart: always
+    networks:
+      - whaticket
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    environment:
+      - PMA_HOSTS=mysql
+    ports:
+      - ${PMA_PORT:-9000}:80
+    networks:
+      - whaticket
+    depends_on:
+      - mysql
