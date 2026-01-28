@@ -17,10 +17,12 @@ type IndexQuery = {
 
 export const index = async (req: Request, res: Response): Promise<Response> => {
   const { searchParam, pageNumber } = req.query as IndexQuery;
+  const tenantId = req.tenantId as number;
 
   const { users, count, hasMore } = await ListUsersService({
     searchParam,
-    pageNumber
+    pageNumber,
+    tenantId
   });
 
   return res.json({ users, count, hasMore });
@@ -34,9 +36,11 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
     (await CheckSettingsHelper("userCreation")) === "disabled"
   ) {
     throw new AppError("ERR_USER_CREATION_DISABLED", 403);
-  } else if (req.url !== "/signup" && req.user.profile !== "admin") {
+  } else if (req.url !== "/signup" && req.user?.profile !== "admin") {
     throw new AppError("ERR_NO_PERMISSION", 403);
   }
+
+  const tenantId = req.tenantId as number;
 
   const user = await CreateUserService({
     email,
@@ -44,7 +48,8 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
     name,
     profile,
     queueIds,
-    whatsappId
+    whatsappId,
+    tenantId
   });
 
   const io = getIO();
@@ -68,7 +73,7 @@ export const update = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
-  if (req.user.profile !== "admin") {
+  if (req.user?.profile !== "admin") {
     throw new AppError("ERR_NO_PERMISSION", 403);
   }
 
@@ -92,7 +97,7 @@ export const remove = async (
 ): Promise<Response> => {
   const { userId } = req.params;
 
-  if (req.user.profile !== "admin") {
+  if (req.user?.profile !== "admin") {
     throw new AppError("ERR_NO_PERMISSION", 403);
   }
 
@@ -106,3 +111,33 @@ export const remove = async (
 
   return res.status(200).json({ message: "User deleted" });
 };
+
+class UserController {
+  async index(request: Request, response: Response): Promise<Response> {
+    const { searchParam, pageNumber } = request.query;
+    const tenantId = request.tenantId!; // ← OBTENER DEL REQUEST
+
+    const result = await ListUsersService({
+      searchParam: searchParam as string,
+      pageNumber: pageNumber as string,
+      tenantId // ← PASAR AL SERVICIO
+    });
+
+    return response.json(result);
+  }
+
+  async store(request: Request, response: Response): Promise<Response> {
+    const { name, email, password, profile } = request.body;
+    const tenantId = request.tenantId!;
+
+    const user = await CreateUserService({
+      name,
+      email,
+      password,
+      profile,
+      tenantId // ← AGREGAR
+    });
+
+    return response.status(201).json(user);
+  }
+}

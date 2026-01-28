@@ -11,6 +11,8 @@ import uploadConfig from "./config/upload";
 import AppError from "./errors/AppError";
 import routes from "./routes";
 import { logger } from "./utils/logger";
+import { setTenant, validateUserTenant } from "./middleware/tenant";
+import isAuth from "./middleware/isAuth";
 
 Sentry.init({ dsn: process.env.SENTRY_DSN });
 
@@ -24,7 +26,11 @@ app.use(
 );
 app.use(cookieParser());
 app.use(express.json());
-app.use(Sentry.Handlers.requestHandler());
+
+app.use(setTenant); // Extrae el tenantId
+app.use(isAuth); // Tu middleware actual
+app.use(validateUserTenant); // Valida que user pertenece a tenant
+
 app.use("/public", express.static(uploadConfig.directory));
 app.use(routes);
 

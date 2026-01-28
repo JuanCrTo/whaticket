@@ -8,10 +8,12 @@ import {
   PrimaryKey,
   Default,
   BelongsTo,
-  ForeignKey
+  ForeignKey,
+  AllowNull
 } from "sequelize-typescript";
 import Contact from "./Contact";
 import Ticket from "./Ticket";
+import Tenant from "./Tenant";
 
 @Table
 class Message extends Model<Message> {
@@ -50,6 +52,14 @@ class Message extends Model<Message> {
   @Default(false)
   @Column
   isDeleted: boolean;
+
+  @ForeignKey(() => Tenant)
+  @AllowNull(false)
+  @Column
+  tenantId: number;
+
+  @BelongsTo(() => Tenant)
+  tenant: Tenant;
 
   @CreatedAt
   @Column(DataType.DATE(6))
