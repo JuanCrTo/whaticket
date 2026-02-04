@@ -33,31 +33,31 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
     farewellMessage,
     queueIds
   }: WhatsappData = req.body;
-
+  const tenantId = req.tenantId;
+  if (!tenantId) {
+    return res.status(400).json({ message: "Tenant not identified" });
+  }
   const { whatsapp, oldDefaultWhatsapp } = await CreateWhatsAppService({
     name,
     status,
     isDefault,
     greetingMessage,
     farewellMessage,
-    queueIds
+    queueIds,
+    tenantId
   });
-
   StartWhatsAppSession(whatsapp);
-
   const io = getIO();
   io.emit("whatsapp", {
     action: "update",
     whatsapp
   });
-
   if (oldDefaultWhatsapp) {
     io.emit("whatsapp", {
       action: "update",
       whatsapp: oldDefaultWhatsapp
     });
   }
-
   return res.status(200).json(whatsapp);
 };
 

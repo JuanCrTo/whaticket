@@ -21,10 +21,24 @@ export const setTenant = async (
     // Opción 1: Del JWT (si agregaste tenantId al token)
     if (req.user?.tenantId) {
       tenantId = req.user.tenantId;
+    } else if (req.headers && req.headers.authorization) {
+      // Extraer tenantId del token JWT si no está en req.user
+      try {
+        const token = req.headers.authorization.replace("Bearer ", "");
+        const decoded = require("jsonwebtoken").decode(token);
+        if (decoded && typeof decoded === "object" && "tenantId" in decoded) {
+          tenantId = decoded.tenantId;
+        }
+      } catch (err) {
+        // ignorar error, se manejará más adelante
+      }
     }
 
-    // Opción 2: Del header custom
-    const headerTenant = req.headers["x-tenant-id"];
+    // Opción 2: Del header custom (aceptar minúsculas y mayúsculas)
+    let headerTenant = req.headers["x-tenant-id"];
+    if (!headerTenant && req.headers["X-Tenant-Id"]) {
+      headerTenant = req.headers["X-Tenant-Id"];
+    }
     if (headerTenant && !tenantId) {
       tenantId = parseInt(headerTenant as string);
     }

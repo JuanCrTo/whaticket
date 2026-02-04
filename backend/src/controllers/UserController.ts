@@ -29,18 +29,50 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
 };
 
 export const store = async (req: Request, res: Response): Promise<Response> => {
-  const { email, password, name, profile, queueIds, whatsappId } = req.body;
+  const { email, password, name, profile, queueIds, whatsappId, tenant } =
+    req.body;
 
-  if (
-    req.url === "/signup" &&
-    (await CheckSettingsHelper("userCreation")) === "disabled"
-  ) {
+  // Si viene tenant (nombre), buscar el id
+  let tenantId = req.tenantId as number | undefined;
+  if (!tenantId && tenant) {
+    const TenantModel = require("../models/Tenant").default;
+    const foundTenant = await TenantModel.findOne({ where: { name: tenant } });
+    if (!foundTenant) {
+      throw new AppError("Tenant not found", 404);
+    }
+    tenantId = foundTenant.id;
+  }
+  if (!tenantId) {
+    throw new AppError("Tenant not identified", 400);
+  }
+
+  // Verificar o crear setting userCreation para el tenant
+  let userCreationSetting;
+  const SettingModel = require("../models/Setting").default;
+  // Buscar setting por key y tenantId
+  let setting = await SettingModel.findOne({
+    where: { key: "userCreation", tenantId }
+  });
+  if (!setting) {
+    try {
+      setting = await SettingModel.create({
+        key: "userCreation",
+        value: "enabled",
+        tenantId
+      });
+    } catch (err) {
+      // Si ocurre un error de unicidad, buscar de nuevo
+      setting = await SettingModel.findOne({
+        where: { key: "userCreation", tenantId }
+      });
+    }
+  }
+  userCreationSetting = setting ? setting.value : "enabled";
+  if (req.url === "/signup" && userCreationSetting === "disabled") {
     throw new AppError("ERR_USER_CREATION_DISABLED", 403);
   } else if (req.url !== "/signup" && req.user?.profile !== "admin") {
     throw new AppError("ERR_NO_PERMISSION", 403);
   }
-
-  const tenantId = req.tenantId as number;
 
   const user = await CreateUserService({
     email,

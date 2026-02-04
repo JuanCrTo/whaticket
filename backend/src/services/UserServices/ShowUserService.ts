@@ -15,7 +15,12 @@ const ShowUserService = async (id: string | number): Promise<User> => {
     ],
     include: [
       { model: Queue, as: "queues", attributes: ["id", "name", "color"] },
-      { model: Whatsapp, as: "whatsapp", attributes: ["id", "name"] }
+      { model: Whatsapp, as: "whatsapp", attributes: ["id", "name"] },
+      {
+        model: require("../../models/Tenant").default,
+        as: "tenant",
+        attributes: ["id", "displayName"]
+      }
     ],
     order: [[{ model: Queue, as: "queues" }, "name", "asc"]]
   });

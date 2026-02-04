@@ -6,10 +6,11 @@ interface QueueData {
   name: string;
   color: string;
   greetingMessage?: string;
+  tenantId: number;
 }
 
 const CreateQueueService = async (queueData: QueueData): Promise<Queue> => {
-  const { color, name } = queueData;
+  const { color, name, tenantId } = queueData;
 
   const queueSchema = Yup.object().shape({
     name: Yup.string()
@@ -59,7 +60,10 @@ const CreateQueueService = async (queueData: QueueData): Promise<Queue> => {
     throw new AppError(err.message);
   }
 
-  const queue = await Queue.create(queueData);
+  if (!tenantId) {
+    throw new AppError("ERR_QUEUE_TENANTID_REQUIRED");
+  }
+  const queue = await Queue.create({ ...queueData, tenantId });
 
   return queue;
 };

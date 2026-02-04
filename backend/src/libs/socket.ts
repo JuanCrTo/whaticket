@@ -20,13 +20,25 @@ export const initIO = (httpServer: Server): SocketIO => {
     try {
       tokenData = verify(token, authConfig.secret);
       logger.debug(JSON.stringify(tokenData), "io-onConnection: tokenData");
+      // Asignar tenantId al contexto del socket
+      if (
+        tokenData &&
+        typeof tokenData === "object" &&
+        "tenantId" in tokenData
+      ) {
+        socket.tenantId = tokenData.tenantId;
+      }
     } catch (error) {
       logger.error(JSON.stringify(error), "Error decoding token");
       socket.disconnect();
       return io;
     }
 
-    logger.info("Client Connected");
+    logger.info(
+      `Client Connected${
+        socket.tenantId ? " (tenantId: " + socket.tenantId + ")" : ""
+      }`
+    );
     socket.on("joinChatBox", (ticketId: string) => {
       logger.info("A client joined a ticket channel");
       socket.join(ticketId);
