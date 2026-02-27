@@ -189,7 +189,7 @@ const LoggedInLayout = ({ children }) => {
         classes={{
           paper: clsx(
             classes.drawerPaper,
-            !drawerOpen && classes.drawerPaperClose
+            !drawerOpen && classes.drawerPaperClose,
           ),
         }}
         open={drawerOpen}
@@ -221,7 +221,7 @@ const LoggedInLayout = ({ children }) => {
             onClick={() => setDrawerOpen(!drawerOpen)}
             className={clsx(
               classes.menuButton,
-              drawerOpen && classes.menuButtonHidden
+              drawerOpen && classes.menuButtonHidden,
             )}
           >
             <MenuIcon />
@@ -233,6 +233,11 @@ const LoggedInLayout = ({ children }) => {
             className={classes.title}
           >
             WhaTicket
+            {user.tenant && user.tenant.displayName
+              ? ` — Empresa: ${user.tenant.displayName}`
+              : user.tenantId
+                ? ` — Tenant: #${user.tenantId}`
+                : ""}
           </Typography>
 
           <div className={classes.themeSwitchContainer}>
@@ -245,9 +250,7 @@ const LoggedInLayout = ({ children }) => {
             />
           </div>
 
-          {user.id && (
-            <NotificationsPopOver className={classes.iconButton} />
-          )}
+          {user.id && <NotificationsPopOver className={classes.iconButton} />}
 
           <div>
             <IconButton

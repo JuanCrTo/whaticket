@@ -1,19 +1,28 @@
 import { QueryInterface } from "sequelize";
 
+const { Sequelize } = require("sequelize");
 module.exports = {
-  up: (queryInterface: QueryInterface) => {
-    return queryInterface.bulkInsert(
-      "Settings",
-      [
-        {
-          key: "userCreation",
-          value: "enabled",
-          createdAt: new Date(),
-          updatedAt: new Date()
-        }
-      ],
-      {}
+  up: async (queryInterface: QueryInterface) => {
+    // Obtener todos los tenants existentes
+    const tenants = await queryInterface.sequelize.query(
+      'SELECT id FROM "Tenants"',
+      { type: Sequelize.QueryTypes.SELECT }
     );
+    if (!tenants.length)
+      throw new Error(
+        "No tenants found. Create at least one tenant before seeding settings."
+      );
+
+    // Para cada tenant, insertar el setting
+    const now = new Date();
+    const settings = tenants.map((tenant: any) => ({
+      key: "userCreation",
+      value: "enabled",
+      tenantId: tenant.id,
+      createdAt: now,
+      updatedAt: now
+    }));
+    return queryInterface.bulkInsert("Settings", settings, {});
   },
 
   down: (queryInterface: QueryInterface) => {

@@ -7,9 +7,11 @@ import {
   PrimaryKey,
   AutoIncrement,
   ForeignKey,
-  BelongsTo
+  BelongsTo,
+  AllowNull
 } from "sequelize-typescript";
 import Contact from "./Contact";
+import Tenant from "./Tenant";
 
 @Table
 class ContactCustomField extends Model<ContactCustomField> {
@@ -30,6 +32,14 @@ class ContactCustomField extends Model<ContactCustomField> {
 
   @BelongsTo(() => Contact)
   contact: Contact;
+
+  @ForeignKey(() => Tenant)
+  @AllowNull(false)
+  @Column
+  tenantId: number;
+
+  @BelongsTo(() => Tenant)
+  tenant: Tenant;
 
   @CreatedAt
   createdAt: Date;

@@ -17,24 +17,106 @@ type IndexQuery = {
 
 export const index = async (req: Request, res: Response): Promise<Response> => {
   const { searchParam, pageNumber } = req.query as IndexQuery;
+  const tenantId = req.tenantId as number;
 
   const { users, count, hasMore } = await ListUsersService({
     searchParam,
-    pageNumber
+    pageNumber,
+    tenantId
   });
 
   return res.json({ users, count, hasMore });
 };
 
 export const store = async (req: Request, res: Response): Promise<Response> => {
-  const { email, password, name, profile, queueIds, whatsappId } = req.body;
+  const { email, password, name, profile, queueIds, whatsappId, tenant } =
+    req.body;
 
-  if (
-    req.url === "/signup" &&
-    (await CheckSettingsHelper("userCreation")) === "disabled"
-  ) {
+  console.log("=== SIGNUP DEBUG ===");
+  console.log("Body tenant:", tenant);
+  console.log("req.tenantId:", req.tenantId);
+
+  // Si viene tenant (nombre), buscar el id
+  let tenantId = req.tenantId as number | undefined;
+
+  // Si no hay tenantId en el request, intentar obtenerlo del body o del header
+  if (!tenantId && tenant) {
+    const TenantModel = require("../models/Tenant").default;
+    const allTenants = await TenantModel.findAll();
+    console.log(
+      "Tenants disponibles:",
+      allTenants.map((t: any) => ({ id: t.id, name: t.name }))
+    );
+
+    // Normalizar el nombre del tenant (trim y lowercase) igual que en el registro
+    const normalizedTenant = tenant.trim().toLowerCase();
+    console.log(
+      "Buscando tenant con nombre:",
+      tenant,
+      "-> normalizado:",
+      normalizedTenant
+    );
+
+    const foundTenant = await TenantModel.findOne({
+      where: { name: normalizedTenant }
+    });
+    console.log(
+      "Tenant encontrado:",
+      foundTenant ? { id: foundTenant.id, name: foundTenant.name } : null
+    );
+
+    if (!foundTenant) {
+      throw new AppError("Tenant not found", 404);
+    }
+    tenantId = foundTenant.id;
+  }
+
+  // Si aún no hay tenantId, intentar del header X-Tenant-Id
+  if (!tenantId) {
+    const tenantHeader = req.headers["x-tenant-id"];
+    if (tenantHeader) {
+      tenantId = parseInt(tenantHeader as string);
+      // Validar que el tenant existe
+      const TenantModel = require("../models/Tenant").default;
+      const foundTenant = await TenantModel.findByPk(tenantId);
+      if (!foundTenant) {
+        throw new AppError("Tenant not found", 404);
+      }
+    }
+  }
+
+  if (!tenantId) {
+    throw new AppError(
+      "Tenant not identified. Please provide tenant name in body or X-Tenant-Id in header",
+      400
+    );
+  }
+
+  // Verificar o crear setting userCreation para el tenant
+  let userCreationSetting;
+  const SettingModel = require("../models/Setting").default;
+  // Buscar setting por key y tenantId
+  let setting = await SettingModel.findOne({
+    where: { key: "userCreation", tenantId }
+  });
+  if (!setting) {
+    try {
+      setting = await SettingModel.create({
+        key: "userCreation",
+        value: "enabled",
+        tenantId
+      });
+    } catch (err) {
+      // Si ocurre un error de unicidad, buscar de nuevo
+      setting = await SettingModel.findOne({
+        where: { key: "userCreation", tenantId }
+      });
+    }
+  }
+  userCreationSetting = setting ? setting.value : "enabled";
+  if (req.url === "/signup" && userCreationSetting === "disabled") {
     throw new AppError("ERR_USER_CREATION_DISABLED", 403);
-  } else if (req.url !== "/signup" && req.user.profile !== "admin") {
+  } else if (req.url !== "/signup" && req.user?.profile !== "admin") {
     throw new AppError("ERR_NO_PERMISSION", 403);
   }
 
@@ -44,7 +126,8 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
     name,
     profile,
     queueIds,
-    whatsappId
+    whatsappId,
+    tenantId
   });
 
   const io = getIO();
@@ -68,7 +151,7 @@ export const update = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
-  if (req.user.profile !== "admin") {
+  if (req.user?.profile !== "admin") {
     throw new AppError("ERR_NO_PERMISSION", 403);
   }
 
@@ -92,7 +175,7 @@ export const remove = async (
 ): Promise<Response> => {
   const { userId } = req.params;
 
-  if (req.user.profile !== "admin") {
+  if (req.user?.profile !== "admin") {
     throw new AppError("ERR_NO_PERMISSION", 403);
   }
 
@@ -106,3 +189,33 @@ export const remove = async (
 
   return res.status(200).json({ message: "User deleted" });
 };
+
+class UserController {
+  async index(request: Request, response: Response): Promise<Response> {
+    const { searchParam, pageNumber } = request.query;
+    const tenantId = request.tenantId!; // ← OBTENER DEL REQUEST
+
+    const result = await ListUsersService({
+      searchParam: searchParam as string,
+      pageNumber: pageNumber as string,
+      tenantId // ← PASAR AL SERVICIO
+    });
+
+    return response.json(result);
+  }
+
+  async store(request: Request, response: Response): Promise<Response> {
+    const { name, email, password, profile } = request.body;
+    const tenantId = request.tenantId!;
+
+    const user = await CreateUserService({
+      name,
+      email,
+      password,
+      profile,
+      tenantId // ← AGREGAR
+    });
+
+    return response.status(201).json(user);
+  }
+}

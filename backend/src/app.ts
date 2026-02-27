@@ -11,6 +11,8 @@ import uploadConfig from "./config/upload";
 import AppError from "./errors/AppError";
 import routes from "./routes";
 import { logger } from "./utils/logger";
+import { setTenant, validateUserTenant } from "./middleware/tenant";
+import isAuth from "./middleware/isAuth";
 
 Sentry.init({ dsn: process.env.SENTRY_DSN });
 
@@ -24,7 +26,29 @@ app.use(
 );
 app.use(cookieParser());
 app.use(express.json());
-app.use(Sentry.Handlers.requestHandler());
+
+// Middleware para rutas privadas (requieren tenant)
+app.use((req, res, next) => {
+  // Permitir crear tenant y otras rutas públicas sin tenantId
+  if (
+    (req.method === "POST" && req.path === "/tenants") ||
+    (req.method === "POST" && req.path === "/auth/signup") ||
+    (req.method === "POST" && req.path === "/auth/login") ||
+    (req.method === "POST" && req.path === "/auth/refresh_token") ||
+    (req.method === "GET" && req.path.startsWith("/tenants/by-name/"))
+    // Puedes agregar aquí más rutas públicas si lo necesitas
+  ) {
+    return next();
+  }
+  setTenant(req, res, err => {
+    if (err) return next(err);
+    isAuth(req, res, err2 => {
+      if (err2) return next(err2);
+      validateUserTenant(req, res, next);
+    });
+  });
+});
+
 app.use("/public", express.static(uploadConfig.directory));
 app.use(routes);
 

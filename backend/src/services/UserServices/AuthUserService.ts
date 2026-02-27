@@ -18,6 +18,7 @@ interface SerializedUser {
 interface Request {
   email: string;
   password: string;
+  tenantId?: number;
 }
 
 interface Response {
@@ -28,11 +29,24 @@ interface Response {
 
 const AuthUserService = async ({
   email,
-  password
+  password,
+  tenantId
 }: Request): Promise<Response> => {
+  // Buscar usuario por email y tenantId si se provee
+  const where: any = { email };
+  if (tenantId) {
+    where.tenantId = tenantId;
+  }
   const user = await User.findOne({
-    where: { email },
-    include: ["queues"]
+    where,
+    include: [
+      { model: Queue, as: "queues" },
+      {
+        model: require("../../models/Tenant").default,
+        as: "tenant",
+        attributes: ["id", "displayName"]
+      }
+    ]
   });
 
   if (!user) {

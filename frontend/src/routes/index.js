@@ -6,6 +6,7 @@ import LoggedInLayout from "../layout";
 import Dashboard from "../pages/Dashboard/";
 import Tickets from "../pages/Tickets/";
 import Signup from "../pages/Signup/";
+import TenantSignup from "../pages/TenantSignup";
 import Login from "../pages/Login/";
 import Connections from "../pages/Connections/";
 import Settings from "../pages/Settings/";
@@ -26,14 +27,30 @@ const Routes = () => {
           <Switch>
             <Route exact path="/login" component={Login} />
             <Route exact path="/signup" component={Signup} />
+            <Route exact path="/register-company" component={TenantSignup} />
             <WhatsAppsProvider>
               <LoggedInLayout>
                 <Route exact path="/" component={Dashboard} isPrivate />
-                <Route exact path="/tickets/:ticketId?" component={Tickets} isPrivate />
-                <Route exact path="/connections" component={Connections} isPrivate />
+                <Route
+                  exact
+                  path="/tickets/:ticketId?"
+                  component={Tickets}
+                  isPrivate
+                />
+                <Route
+                  exact
+                  path="/connections"
+                  component={Connections}
+                  isPrivate
+                />
                 <Route exact path="/contacts" component={Contacts} isPrivate />
                 <Route exact path="/users" component={Users} isPrivate />
-                <Route exact path="/quickAnswers" component={QuickAnswers} isPrivate />
+                <Route
+                  exact
+                  path="/quickAnswers"
+                  component={QuickAnswers}
+                  isPrivate
+                />
                 <Route exact path="/Settings" component={Settings} isPrivate />
                 <Route exact path="/Queues" component={Queues} isPrivate />
               </LoggedInLayout>

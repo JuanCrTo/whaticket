@@ -4,14 +4,27 @@ import {
   CreatedAt,
   UpdatedAt,
   Model,
-  PrimaryKey
+  PrimaryKey,
+  ForeignKey,
+  AllowNull,
+  BelongsTo,
+  Unique
 } from "sequelize-typescript";
+import Tenant from "./Tenant";
 
 @Table
 class Setting extends Model<Setting> {
   @PrimaryKey
   @Column
   key: string;
+
+  @ForeignKey(() => Tenant)
+  @AllowNull(false)
+  @Column
+  tenantId: number;
+
+  @BelongsTo(() => Tenant)
+  tenant: Tenant;
 
   @Column
   value: string;

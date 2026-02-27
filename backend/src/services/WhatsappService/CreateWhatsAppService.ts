@@ -11,6 +11,7 @@ interface Request {
   farewellMessage?: string;
   status?: string;
   isDefault?: boolean;
+  tenantId: number;
 }
 
 interface Response {
@@ -24,7 +25,8 @@ const CreateWhatsAppService = async ({
   queueIds = [],
   greetingMessage,
   farewellMessage,
-  isDefault = false
+  isDefault = false,
+  tenantId
 }: Request): Promise<Response> => {
   const schema = Yup.object().shape({
     name: Yup.string()
@@ -69,13 +71,17 @@ const CreateWhatsAppService = async ({
     throw new AppError("ERR_WAPP_GREETING_REQUIRED");
   }
 
+  if (!tenantId) {
+    throw new AppError("ERR_WHATSAPP_TENANTID_REQUIRED");
+  }
   const whatsapp = await Whatsapp.create(
     {
       name,
       status,
       greetingMessage,
       farewellMessage,
-      isDefault
+      isDefault,
+      tenantId
     },
     { include: ["queues"] }
   );

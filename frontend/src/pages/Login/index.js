@@ -12,10 +12,10 @@ import {
   Container,
   InputAdornment,
   IconButton,
-  Link
-} from '@material-ui/core';
+  Link,
+} from "@material-ui/core";
 
-import { LockOutlined, Visibility, VisibilityOff } from '@material-ui/icons';
+import { LockOutlined, Visibility, VisibilityOff } from "@material-ui/icons";
 
 import { makeStyles } from "@material-ui/core/styles";
 
@@ -59,7 +59,7 @@ const useStyles = makeStyles((theme) => ({
 const Login = () => {
   const classes = useStyles();
 
-  const [user, setUser] = useState({ email: "", password: "" });
+  const [user, setUser] = useState({ email: "", password: "", tenant: "" });
   const [showPassword, setShowPassword] = useState(false);
 
   const { handleLogin } = useContext(AuthContext);
@@ -89,13 +89,24 @@ const Login = () => {
             margin="normal"
             required
             fullWidth
+            id="tenant"
+            label={i18n.t("login.form.tenant")}
+            name="tenant"
+            value={user.tenant}
+            onChange={handleChangeInput}
+            autoFocus
+          />
+          <TextField
+            variant="outlined"
+            margin="normal"
+            required
+            fullWidth
             id="email"
             label={i18n.t("login.form.email")}
             name="email"
             value={user.email}
             onChange={handleChangeInput}
             autoComplete="email"
-            autoFocus
           />
           <TextField
             variant="outlined"
@@ -108,7 +119,7 @@ const Login = () => {
             value={user.password}
             onChange={handleChangeInput}
             autoComplete="current-password"
-            type={showPassword ? 'text' : 'password'}
+            type={showPassword ? "text" : "password"}
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end">
@@ -119,7 +130,7 @@ const Login = () => {
                     {showPassword ? <VisibilityOff /> : <Visibility />}
                   </IconButton>
                 </InputAdornment>
-              )
+              ),
             }}
           />
           <Button
@@ -132,7 +143,7 @@ const Login = () => {
             {i18n.t("login.buttons.submit")}
           </Button>
           <Grid container>
-            <Grid item>
+            <Grid item xs={12}>
               <Link
                 href="#"
                 variant="body2"
@@ -140,6 +151,16 @@ const Login = () => {
                 to="/signup"
               >
                 {i18n.t("login.buttons.register")}
+              </Link>
+            </Grid>
+            <Grid item xs={12}>
+              <Link
+                href="#"
+                variant="body2"
+                component={RouterLink}
+                to="/register-company"
+              >
+                ¿Nueva empresa? Regístrate aquí
               </Link>
             </Grid>
           </Grid>

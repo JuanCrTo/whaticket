@@ -14,15 +14,21 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
 
 export const store = async (req: Request, res: Response): Promise<Response> => {
   const { name, color, greetingMessage } = req.body;
-
-  const queue = await CreateQueueService({ name, color, greetingMessage });
-
+  const tenantId = req.tenantId;
+  if (!tenantId) {
+    return res.status(400).json({ message: "Tenant not identified" });
+  }
+  const queue = await CreateQueueService({
+    name,
+    color,
+    greetingMessage,
+    tenantId
+  });
   const io = getIO();
   io.emit("queue", {
     action: "update",
     queue
   });
-
   return res.status(200).json(queue);
 };
 

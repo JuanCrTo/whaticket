@@ -9,10 +9,13 @@ import {
   AllowNull,
   Unique,
   Default,
-  HasMany
+  HasMany,
+  ForeignKey,
+  BelongsTo
 } from "sequelize-typescript";
 import ContactCustomField from "./ContactCustomField";
 import Ticket from "./Ticket";
+import Tenant from "./Tenant";
 
 @Table
 class Contact extends Model<Contact> {
@@ -40,6 +43,14 @@ class Contact extends Model<Contact> {
   @Default(false)
   @Column
   isGroup: boolean;
+
+  @ForeignKey(() => Tenant)
+  @AllowNull(false)
+  @Column
+  tenantId: number;
+
+  @BelongsTo(() => Tenant)
+  tenant: Tenant;
 
   @CreatedAt
   createdAt: Date;

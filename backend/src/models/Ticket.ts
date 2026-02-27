@@ -9,7 +9,8 @@ import {
   BelongsTo,
   HasMany,
   AutoIncrement,
-  Default
+  Default,
+  AllowNull
 } from "sequelize-typescript";
 
 import Contact from "./Contact";
@@ -17,6 +18,7 @@ import Message from "./Message";
 import Queue from "./Queue";
 import User from "./User";
 import Whatsapp from "./Whatsapp";
+import Tenant from "./Tenant";
 
 @Table
 class Ticket extends Model<Ticket> {
@@ -37,6 +39,14 @@ class Ticket extends Model<Ticket> {
   @Default(false)
   @Column
   isGroup: boolean;
+
+  @ForeignKey(() => Tenant)
+  @AllowNull(false)
+  @Column
+  tenantId: number;
+
+  @BelongsTo(() => Tenant)
+  tenant: Tenant;
 
   @CreatedAt
   createdAt: Date;
