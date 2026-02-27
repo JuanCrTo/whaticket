@@ -143,7 +143,7 @@ const Login = () => {
             {i18n.t("login.buttons.submit")}
           </Button>
           <Grid container>
-            <Grid item>
+            <Grid item xs={12}>
               <Link
                 href="#"
                 variant="body2"
@@ -151,6 +151,16 @@ const Login = () => {
                 to="/signup"
               >
                 {i18n.t("login.buttons.register")}
+              </Link>
+            </Grid>
+            <Grid item xs={12}>
+              <Link
+                href="#"
+                variant="body2"
+                component={RouterLink}
+                to="/register-company"
+              >
+                ¿Nueva empresa? Regístrate aquí
               </Link>
             </Grid>
           </Grid>

@@ -14,9 +14,10 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
   });
   const { email, password } = req.body;
   // Extraer tenantId del header
-  let tenantId = req.headers["x-tenant-id"];
-  if (tenantId) {
-    tenantId = parseInt(tenantId as string);
+  let tenantId: number | undefined;
+  const tenantHeader = req.headers["x-tenant-id"];
+  if (tenantHeader) {
+    tenantId = parseInt(tenantHeader as string);
   }
 
   const { token, serializedUser, refreshToken } = await AuthUserService({

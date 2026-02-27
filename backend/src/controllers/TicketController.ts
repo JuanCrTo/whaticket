@@ -38,7 +38,7 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
     withUnreadMessages
   } = req.query as IndexQuery;
 
-  const userId = req.user.id;
+  const userId = req.user!.id;
 
   let queueIds: number[] = [];
 

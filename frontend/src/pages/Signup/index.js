@@ -195,7 +195,7 @@ const SignUp = () => {
                 {i18n.t("signup.buttons.submit")}
               </Button>
               <Grid container justifyContent="flex-end">
-                <Grid item>
+                <Grid item xs={12}>
                   <Link
                     href="#"
                     variant="body2"
@@ -203,6 +203,16 @@ const SignUp = () => {
                     to="/login"
                   >
                     {i18n.t("signup.buttons.login")}
+                  </Link>
+                </Grid>
+                <Grid item xs={12}>
+                  <Link
+                    href="#"
+                    variant="body2"
+                    component={RouterLink}
+                    to="/register-company"
+                  >
+                    ¿No tienes un tenant? Crea tu empresa primero
                   </Link>
                 </Grid>
               </Grid>

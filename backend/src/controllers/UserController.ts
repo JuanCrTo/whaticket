@@ -32,18 +32,64 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
   const { email, password, name, profile, queueIds, whatsappId, tenant } =
     req.body;
 
+  console.log("=== SIGNUP DEBUG ===");
+  console.log("Body tenant:", tenant);
+  console.log("req.tenantId:", req.tenantId);
+
   // Si viene tenant (nombre), buscar el id
   let tenantId = req.tenantId as number | undefined;
+
+  // Si no hay tenantId en el request, intentar obtenerlo del body o del header
   if (!tenantId && tenant) {
     const TenantModel = require("../models/Tenant").default;
-    const foundTenant = await TenantModel.findOne({ where: { name: tenant } });
+    const allTenants = await TenantModel.findAll();
+    console.log(
+      "Tenants disponibles:",
+      allTenants.map((t: any) => ({ id: t.id, name: t.name }))
+    );
+
+    // Normalizar el nombre del tenant (trim y lowercase) igual que en el registro
+    const normalizedTenant = tenant.trim().toLowerCase();
+    console.log(
+      "Buscando tenant con nombre:",
+      tenant,
+      "-> normalizado:",
+      normalizedTenant
+    );
+
+    const foundTenant = await TenantModel.findOne({
+      where: { name: normalizedTenant }
+    });
+    console.log(
+      "Tenant encontrado:",
+      foundTenant ? { id: foundTenant.id, name: foundTenant.name } : null
+    );
+
     if (!foundTenant) {
       throw new AppError("Tenant not found", 404);
     }
     tenantId = foundTenant.id;
   }
+
+  // Si aún no hay tenantId, intentar del header X-Tenant-Id
   if (!tenantId) {
-    throw new AppError("Tenant not identified", 400);
+    const tenantHeader = req.headers["x-tenant-id"];
+    if (tenantHeader) {
+      tenantId = parseInt(tenantHeader as string);
+      // Validar que el tenant existe
+      const TenantModel = require("../models/Tenant").default;
+      const foundTenant = await TenantModel.findByPk(tenantId);
+      if (!foundTenant) {
+        throw new AppError("Tenant not found", 404);
+      }
+    }
+  }
+
+  if (!tenantId) {
+    throw new AppError(
+      "Tenant not identified. Please provide tenant name in body or X-Tenant-Id in header",
+      400
+    );
   }
 
   // Verificar o crear setting userCreation para el tenant

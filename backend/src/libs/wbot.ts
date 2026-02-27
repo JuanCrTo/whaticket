@@ -56,7 +56,32 @@ export const initWbot = async (whatsapp: Whatsapp): Promise<Session> => {
         }
       });
 
-      wbot.initialize();
+      wbot.on("error", async error => {
+        logger.error(`Session: ${sessionName} ERROR:`, error);
+        await whatsapp.update({ status: "DISCONNECTED" });
+        io.emit("whatsappSession", {
+          action: "update",
+          session: whatsapp
+        });
+        reject(error);
+      });
+
+      wbot.on("disconnected", async reason => {
+        logger.info(`Session: ${sessionName} DISCONNECTED: ${reason}`);
+        await whatsapp.update({ status: "DISCONNECTED" });
+        io.emit("whatsappSession", {
+          action: "update",
+          session: whatsapp
+        });
+      });
+
+      try {
+        wbot.initialize();
+      } catch (err) {
+        logger.error(`Session: ${sessionName} Failed to initialize:`, err);
+        reject(err);
+        return;
+      }
 
       wbot.on("qr", async qr => {
         logger.info("Session:", sessionName);
@@ -129,6 +154,7 @@ export const initWbot = async (whatsapp: Whatsapp): Promise<Session> => {
       });
     } catch (err) {
       logger.error(err);
+      reject(err);
     }
   });
 };

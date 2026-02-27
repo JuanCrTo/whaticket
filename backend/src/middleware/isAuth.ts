@@ -27,7 +27,8 @@ const isAuth = (req: Request, res: Response, next: NextFunction): void => {
 
     req.user = {
       id,
-      profile
+      profile,
+      tenantId: req.tenantId || 0
     };
   } catch (err) {
     throw new AppError(
